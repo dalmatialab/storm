@@ -1,0 +1,205 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nimbus
+spec:
+  replicas: {{ .Values.nimbus.replicas }}
+  serviceName: {{ .Values.nimbus.serviceName }}
+  selector:
+    matchLabels:
+      app: nimbus
+  template:
+    metadata:
+      labels:
+        app: nimbus
+    spec:
+      containers:
+      - name: storm-nimbus
+        image: {{ .Values.image }}:{{ .Values.imageTag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        ports:
+          - containerPort: 6627
+        env:
+        - name: TYPE
+          value: storm nimbus
+        - name: ZOOKEEPER_SERVICE
+          value: {{ .Values.zookeeper.serviceName }}
+        {{- if .Values.nimbus.storage.enabled }}
+        volumeMounts:
+        {{- .Values.nimbus.storage.volumeMounts | toYaml | trimSuffix "\n" | nindent 8 }}
+      	{{- end }}
+      restartPolicy: {{ .Values.restartPolicy }}
+      {{- if .Values.nimbus.storage.enabled }}
+      volumes:
+      {{- .Values.nimbus.storage.volumes | toYaml | trimSuffix "\n" | nindent 6 }}
+      {{- end }}
+      {{- if .Values.nimbus.nodeSelector }}
+      nodeSelector:
+        nimbus: {{ .Values.nimbus.nodeSelector | quote }}
+      {{- end }}
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.nimbus.serviceName}}
+spec:
+  selector:
+    app: nimbus
+  ports:
+  - name: "6627"
+    port: 6627
+  - name: "22"
+    port: 22
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: supervisor
+spec:
+  replicas: {{ .Values.supervisor.replicas }}
+  serviceName: supervisor
+  selector:
+    matchLabels:
+      app: supervisor
+  template:
+    metadata:
+      labels:
+        app: supervisor
+    spec:
+      containers:
+      - name: storm-supervisor
+        image: {{ .Values.image }}:{{ .Values.imageTag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy}}
+        env:
+        - name: TYPE
+          value: storm supervisor
+        - name: ZOOKEEPER_SERVICE
+          value: {{ .Values.zookeeper.serviceName }}
+        - name: NIMBUS_SERVICE
+          value: {{ .Values.nimbus.serviceName }}
+        {{- if .Values.supervisor.storage.enabled }}
+        volumeMounts:
+        {{- .Values.supervisor.storage.volumeMounts | toYaml | trimSuffix "\n" | nindent 8 }}
+      	{{- end }}
+      restartPolicy: {{ .Values.restartPolicy }}
+      {{- if .Values.supervisor.storage.enabled }}
+      volumes:
+      {{- .Values.supervisor.storage.volumes | toYaml | trimSuffix "\n" | nindent 6 }}
+      {{- end }}
+      {{- if .Values.supervisor.nodeSelector }}
+      nodeSelector:
+        supervisor: {{ .Values.supervisor.nodeSelector | quote }}
+      {{- end }}
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: supervisor
+spec:
+  selector:
+    app: supervisor
+  ports:
+  - name: "6700"
+    port: 6700
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ui
+  template:
+    metadata:
+      labels:
+        app: ui
+    spec:
+      containers:
+      - name: storm-ui
+        image: {{ .Values.image }}:{{ .Values.imageTag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy}}
+        env:
+        - name: TYPE
+          value: storm ui
+        - name: ZOOKEEPER_SERVICE
+          value: {{ .Values.zookeeper.serviceName }}
+        - name: NIMBUS_SERVICE
+          value: {{ .Values.nimbus.serviceName }}
+        {{- if .Values.ui.storage.enabled }}
+        volumeMounts:
+        {{- .Values.ui.storage.volumeMounts | toYaml | trimSuffix "\n" | nindent 8 }}
+      	{{- end }}
+      restartPolicy: {{ .Values.restartPolicy }}
+      {{- if .Values.ui.storage.enabled }}
+      volumes:
+      {{- .Values.ui.storage.volumes | toYaml | trimSuffix "\n" | nindent 6 }}
+      {{- end }}
+      {{- if .Values.ui.nodeSelector }}
+      nodeSelector:
+        ui: {{ .Values.ui.nodeSelector | quote }}
+      {{- end }}
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: storm-ui-external
+spec:
+  ports:
+  - port: 8080
+    name: "8080"
+    targetPort: 8080
+    nodePort: {{ .Values.ui.nodePort }}
+  selector:
+    app: ui
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper
+spec:
+  selector:
+    matchLabels:
+      app: zookeeper
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+      - name: storm-zookeeper
+        image: {{ .Values.zookeeper.image }}:{{ .Values.zookeeper.imageTag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        ports:
+        - containerPort: 2181
+          name: client
+        - containerPort: 2888
+          name: server
+        - containerPort: 3888
+          name: leader-election
+      restartPolicy: {{ .Values.restartPolicy }}
+      {{- if .Values.zookeeper.nodeSelector }}
+      nodeSelector:
+        zookeeper: {{ .Values.zookeeper.nodeSelector | quote }}
+      {{- end }}
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.zookeeper.serviceName }}
+spec:
+  ports:
+  - name: "2888"
+    port: 2888
+  - name: "3888"
+    port: 3888   
+  - port: 2181
+    name: client
+  selector:
+    app: zookeeper
+---

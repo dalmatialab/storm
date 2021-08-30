@@ -1,0 +1,47 @@
+image: dalmatialab/storm
+imageTag: 2.2.0-rc-1
+imagePullPolicy: Always
+restartPolicy: Always
+
+nimbus:
+  serviceName: nimbus
+  nodeSelector: false
+  replicas: 1
+  storage:
+    enabled: false
+    volumeMounts:
+      - name:
+        mountPath:
+    volumes:
+      - name:
+        hostPath:
+          path:
+supervisor:
+  replicas: 2
+  nodeSelector: false
+  storage:
+    enabled: false
+    volumeMounts:
+      - name:
+        mountPath:
+    volumes:
+      - name:
+        hostPath:
+          path:
+ui:
+  nodePort:
+  nodeSelector: false
+  storage:
+    enabled: false
+    volumeMounts:
+      - name:
+        mountPath:
+    volumes:
+      - name:
+        hostPath:
+          path:
+zookeeper:
+  serviceName: zookeeper
+  image: zookeeper
+  imageTag: latest
+  nodeSelector: false
