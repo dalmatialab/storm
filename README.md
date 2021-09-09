@@ -3,6 +3,7 @@
 # Supported tags and respective Dockerfile links
 
  - 2.2.0-rc-1
+ - 2.2.0-rc-2
 
 # What is Storm ? 
 
@@ -60,6 +61,10 @@ This is *required* variable. It specifies Zookeeper endpoint at which Storm supe
 **NIMBUS_SERVICE**
 
 This is *required* variable. It specifies Storm nimbus endpoint at which supervisor and ui will connect.
+
+**TZ**
+
+This is *optional* variable. It specifes timezone. Default value is `Europe/Zagreb`.
 
 ## Ports
 

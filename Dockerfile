@@ -1,6 +1,11 @@
 FROM storm:2.2.0
 LABEL maintainer="dalmatialab"
 
+# Install tzdata and set right timezone
+ENV DEBIAN_FRONTEND="noninteractive"
+RUN apt update && apt-get -y install tzdata
+ENV TZ=Europe/Zagreb
+
 RUN apt update && apt install -y python3 python3-pip openssh-server
 RUN rm /usr/bin/python && ln -s /usr/bin/python3.7 /usr/bin/python
 
