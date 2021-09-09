@@ -2,8 +2,8 @@
 
 # Supported tags and respective Dockerfile links
 
- - 2.2.0-rc-1
- - 2.2.0-rc-2
+ - [2.2.0-rc-1](https://github.com/dalmatialab/storm/blob/93b2f042737f84334faad7697bad681d03f7ba2b/Dockerfile)
+ - [2.2.0-rc-2](https://github.com/dalmatialab/storm/blob/7b0c02380c6556b97b3119fc295ccdf455264a02/Dockerfile)
 
 # What is Storm ? 
 
